@@ -39,3 +39,11 @@ AATGATCAAATTATGTTTCCCATGCATCAGGTGCAATGGGAAGCTCTTctggagagtgagagaagcttccagttaaggtg
 
 # use the UNIX fold command to wrap the FASTA sequence such that each line
 ```
+如何批量使用
+```
+bedtools getfasta -fi /path/to/reference_genome.fasta -bed /path/to/your_gene_positions.bed -fo /path/to/output_sequences.fasta -s
+```
+-fi后面跟的是参考基因组的路径。
+-bed后面跟的是你的BED文件的路径。
+-fo后面跟的是输出文件的路径，提取的序列会保存在这个文件中。
+-s是一个重要的选项，表示要根据strand信息提取序列。如果你的基因或特征位于负链上，它会自动提取互补序列
