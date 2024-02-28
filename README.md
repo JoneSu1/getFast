@@ -44,6 +44,69 @@ AATGATCAAATTATGTTTCCCATGCATCAGGTGCAATGGGAAGCTCTTctggagagtgagagaagcttccagttaaggtg
 bedtools getfasta -fi /path/to/reference_genome.fasta -bed /path/to/your_gene_positions.bed -fo /path/to/output_sequences.fasta -s
 ```
 -fi后面跟的是参考基因组的路径。
+
 -bed后面跟的是你的BED文件的路径。
+
 -fo后面跟的是输出文件的路径，提取的序列会保存在这个文件中。
+
 -s是一个重要的选项，表示要根据strand信息提取序列。如果你的基因或特征位于负链上，它会自动提取互补序列
+
+
+**In the qualitative reseach method to get sequcence data by bedtools**
+
+```
+bedtools getfasta -fi /home/junhua/Documents/deepEpromote/DeepEpromoter/ref_genome/hg38.fa -bed /home/junhua/Documents/deepEpromote/DeepEpromoter/Epromoter_list/EpromoterVScontrol_500BP.bed -fo /home/junhua/Documents/deepEpromote/DeepEpromoter/Epromoter_list/bedtools/output_sequences.fasta -s
+```
+
+```
+The output:
+
+>chr1:68555-69055()
+CACTTTTGAATTCCCTATTCTTTTATCCTCTGTTAATTTTTAAGTATTATATTTGTGATATTATTTTTTCTTTTTTTCTATTTTTTATCTTTCATTTCATTTTGGCCTATTTTTTTCTCTTAAGAACTTTAATATCACCAAATAACATGTGTGCTACAAACTGTTTTGTAGTTCAAAGAAAAAGGAGATAAACATAGAGTTATGGCATAGACTTAATCTGGCAGAGAGACAAGCATAAATAATGGTATTTTATATTAGGAATAAACCTAACATTAATGGAGACACTGAGAAGCCGAGATAACTGAATTATAAGGCATAGCCAGGGAAGTAGTGCGAGATAGAATTATGATCTTGTTGAATTCTGAATGTCTTTAAGTAATAGATTATAGAAAGTCACTGTAAGAGTGAGCAGAATGATATAAAATGAGGCTTTGAATTTGAATATAATAATTCTGACTTCCTTCTCCTTCTCTTCTTCAAGGTAACTGCAGAGGCTATTT
+>chr1:925231-925731()
+ACGGGGACTCGAGAGAGCGGGCAGGAGGCGGGTTGGGAGGGCGCGGAGCCCCGGGTTCGGGGGAGACTGGAGGGGCGCACGTGCGGCCGGGTGCGAGCGCGCGGCGGGGGAGGCTGCGGGGCGGCGCGGGGGCGCGCGCGGAGCCCGAGCGGCGGCGCCAGGTCACACAACCTGTTTTGGCGCCTGCGGGCGCCTGGGCCCAAGGGTGCGACGCGGGGGCGCCTGAGCCGGGACACAGGGGGTGCGGTGAGCGCCAGGCGCCGCGGGGAGTTAAAAAGTTCGGGACCTGAGCGGTGCGTGGTTCCGCGGTGGCCGCCTCTTCCTGCCGCGCAGGCCGAGGGTCCCGACGGCGCCGCTCACCGCTCCGGGACTCAGCCTTTCTGGGCCCGGCCTGCGGTTCCCTCGGGGCCGGGGAGAGGGTGGAGCGCGGGAGGAGGGGCGCCGGGTGGGGACGCCCAGGCCCTTCGTCGGGGGAGGGCGCTCCACCCGGGCTGGAGTTG
+>chr1:938775-939275()
+```
+
+**If we want to remain another lable in data**
+We need use python to annotate the output_sequence file.
+```
+# Paths to your BED and FASTA files
+bed_file_path = '/home/junhua/Documents/deepEpromote/DeepEpromoter/Epromoter_list/EpromoterVScontrol_500BP.bed'
+output_fasta_path = '/home/junhua/Documents/deepEpromote/DeepEpromoter/Epromoter_list/bedtools/annotated_sequences.fasta'
+# Dictionary to store annotations, with the key being a tuple of (chr, start, end)
+annotations = {}
+with open(bed_file_path, 'r') as bed_file:
+    for line in bed_file:
+        parts = line.strip().split()
+        # Assuming the 1st, 2nd, and 3rd columns are chr, start, and end, and the 4th is strand
+        key = (parts[0], parts[1], parts[2])
+        # Store additional annotations, here assuming everything from the 4th column onwards
+        annotations[key] = parts[3:]
+
+# Reading the FASTA file and appending annotations
+with open(fasta_file_path, 'r') as fasta_file, open('/home/junhua/Documents/deepEpromote/DeepEpromoter/Epromoter_list/bedtools/annotated_sequences.fasta', 'w') as out_file:
+    for line in fasta_file:
+        if line.startswith('>'):
+            # Extracting chr, start, and end from the FASTA header
+            header_parts = line[1:].strip().split(':')
+            chr_start_end = header_parts[1].split('-')
+            chr = header_parts[0]
+            start = chr_start_end[0]
+            end = chr_start_end[1].split('(')[0]
+
+            key = (chr, start, end)
+            annotation = annotations.get(key, ["Unknown strand", "No annotation"])
+            # Correcting the output format to include the strand in the header
+            out_line = f'>{chr}:{start}-{end}({annotation[0]}) {annotation[1]}\n'
+        else:
+            out_line = line
+        out_file.write(out_line)
+
+print("Annotated sequences have been saved.")
+
+
+```
+
+**In the next step I want to compare the new output_sequence data with old sequence data in python**
+
